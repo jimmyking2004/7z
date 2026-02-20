@@ -1,0 +1,52 @@
+name: Update docs from src
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'conf/**'
+      - 'gulp_tasks/**'
+      - 'gulpfile.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'postcss.config.js'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 8 (legacy toolchain)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '8.17.0'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build docs artifacts
+        run: npm run build
+
+      - name: Commit updated docs
+        run: |
+          if [ -z "$(git status --porcelain docs)" ]; then
+            echo "No docs changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs
+          git commit -m "chore: update docs build artifacts"
+          git push
